@@ -3,7 +3,7 @@ name: ESP-IDF Build & Firmware
 on:
   push:
     branches:
-      - '**'          
+      - '**'          # build on all branches
   pull_request:
 
 jobs:
@@ -11,14 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup ESP-IDF
-        uses: esp-idf/setup-esp-idf@v2
+      # 2. Install ESP-IDF v5.4
+      - name: Install ESP-IDF
+        uses: espressif/install-esp-idf-action@v1
         with:
           version: 'v5.4'
 
+      # 3. Cache Python dependencies
       - name: Cache Python dependencies
         uses: actions/cache@v3
         with:
@@ -27,6 +30,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
+      # 4. Install Python dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
@@ -34,16 +38,19 @@ jobs:
             pip install -r TCS-Mini/TCSDG-TCS-Mini-LoRa/requirements.txt; \
           fi
 
+      # 5. Cache ESP-IDF build folder
       - name: Cache ESP-IDF build
         uses: actions/cache@v3
         with:
           path: TCS-Mini/TCSDG-TCS-Mini-LoRa/build
           key: ${{ runner.os }}-espidf-build-${{ hashFiles('TCS-Mini/TCSDG-TCS-Mini-LoRa/**/*.c') }}-${{ hashFiles('TCS-Mini/TCSDG-TCS-Mini-LoRa/**/*.h') }}
 
+      # 6. Build project
       - name: Build project
         run: idf.py build
         working-directory: TCS-Mini/TCSDG-TCS-Mini-LoRa
 
+      # 7. Upload only firmware binaries
       - name: Upload firmware binaries
         uses: actions/upload-artifact@v4
         with:
@@ -52,7 +59,8 @@ jobs:
             TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.bin
             TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.elf
 
-      - name: Create GitHub release (only on main)
+      # 8. Create GitHub release (only on main branch)
+      - name: Create GitHub release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
@@ -62,6 +70,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # 9. Upload binaries to release (only on main branch)
       - name: Upload binaries to release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
@@ -72,5 +81,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # 10. Clean up build folder
       - name: Clean up build folder
         run: rm -rf TCS-Mini/TCSDG-TCS-Mini-LoRa/build

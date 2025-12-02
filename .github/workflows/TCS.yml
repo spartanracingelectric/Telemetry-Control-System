@@ -1,0 +1,75 @@
+name: ESP-IDF Build Multiple Projects
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Install ESP-IDF v5.4
+      - name: Install ESP-IDF
+        uses: espressif/install-esp-idf-action@v1
+        with:
+          version: 'v5.4'
+
+      # 3. Cache Python dependencies
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4. Install Python dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          for f in TCS-Mini/TCSDG-TCS-Mini-LoRa/requirements.txt TCS-Master/TCSDG-TCS-Master-Main/requirements.txt; do
+            if [ -f $f ]; then pip install -r $f; fi
+          done
+
+      # ---------------------
+      # Build TCS-Mini project
+      # ---------------------
+      - name: Build TCS-Mini Project
+        run: idf.py build
+        working-directory: TCS-Mini/TCSDG-TCS-Mini-LoRa
+
+      - name: Upload TCS-Mini binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-mini
+          path: |
+            TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.bin
+            TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.elf
+
+      - name: Clean up TCS-Mini build folder
+        run: rm -rf TCS-Mini/TCSDG-TCS-Mini-LoRa/build
+
+      # ---------------------
+      # Build TCS-Master project
+      # ---------------------
+      - name: Build TCS-Master Project
+        run: idf.py build
+        working-directory: TCS-Master/TCSDG-TCS-Master-Main
+
+      - name: Upload TCS-Master binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-master
+          path: |
+            TCS-Master/TCSDG-TCS-Master-Main/build/*.bin
+            TCS-Master/TCSDG-TCS-Master-Main/build/*.elf
+
+      - name: Clean up TCS-Master build folder
+        run: rm -rf TCS-Master/TCSDG-TCS-Master-Main/build

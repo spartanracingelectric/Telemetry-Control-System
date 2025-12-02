@@ -1,0 +1,64 @@
+name: ESP-IDF Build & Firmware
+
+on:
+  push:
+    branches:
+      - '**'          # build on all branches
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Install ESP-IDF v5.4
+      - name: Install ESP-IDF
+        uses: espressif/install-esp-idf-action@v1
+        with:
+          version: 'v5.4'
+
+      # 3. Cache Python dependencies
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('TCS-Mini/TCSDG-TCS-Mini-LoRa/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4. Install Python dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f TCS-Mini/TCSDG-TCS-Mini-LoRa/requirements.txt ]; then \
+            pip install -r TCS-Mini/TCSDG-TCS-Mini-LoRa/requirements.txt; \
+          fi
+
+      # 5. Cache ESP-IDF build folder
+      - name: Cache ESP-IDF build
+        uses: actions/cache@v3
+        with:
+          path: TCS-Mini/TCSDG-TCS-Mini-LoRa/build
+          key: ${{ runner.os }}-espidf-build-${{ hashFiles('TCS-Mini/TCSDG-TCS-Mini-LoRa/**/*.c') }}-${{ hashFiles('TCS-Mini/TCSDG-TCS-Mini-LoRa/**/*.h') }}
+
+      # 6. Build project
+      - name: Build project
+        run: idf.py build
+        working-directory: TCS-Mini/TCSDG-TCS-Mini-LoRa
+
+      # 7. Upload only firmware binaries
+      - name: Upload firmware binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.bin
+            TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.elf
+
+      # 8. Clean up build folder
+      - name: Clean up build folder
+        run: rm -rf TCS-Mini/TCSDG-TCS-Mini-LoRa/build

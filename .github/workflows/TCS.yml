@@ -19,11 +19,17 @@ jobs:
       image: espressif/idf:v5.4
 
     steps:
-      # 1. Checkout code
-      - name: Checkout repository
+      # 1. Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Cache Python dependencies
+      # 2. Ensure pip is installed and upgraded
+      - name: Ensure pip and setuptools
+        run: |
+          python -m ensurepip --upgrade
+          python -m pip install --upgrade pip setuptools wheel
+
+      # 3. Cache Python dependencies
       - name: Cache Python dependencies
         uses: actions/cache@v3
         with:
@@ -32,19 +38,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # 3. Install Python dependencies if needed
+      # 4. Install project-specific Python dependencies
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
           REQ="${{ matrix.project }}/requirements.txt"
           if [ -f $REQ ]; then pip install -r $REQ; fi
 
-      # 4. Build project
+      # 5. Build project
       - name: Build project
         run: idf.py build
         working-directory: ${{ matrix.project }}
 
-      # 5. Upload binaries
+      # 6. Upload binaries
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
@@ -53,6 +58,6 @@ jobs:
             ${{ matrix.project }}/build/*.bin
             ${{ matrix.project }}/build/*.elf
 
-      # 6. Clean up build folder
+      # 7. Clean up build folder
       - name: Clean up build folder
         run: rm -rf ${{ matrix.project }}/build

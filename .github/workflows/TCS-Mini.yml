@@ -59,28 +59,6 @@ jobs:
             TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.bin
             TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.elf
 
-      # 8. Create GitHub release (only on main branch)
-      - name: Create GitHub release
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.sha }}
-          name: Release ${{ github.sha }}
-          body: "Automatic firmware release from main branch"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 9. Upload binaries to release (only on main branch)
-      - name: Upload binaries to release
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.bin
-            TCS-Mini/TCSDG-TCS-Mini-LoRa/build/*.elf
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 10. Clean up build folder
+      # 8. Clean up build folder
       - name: Clean up build folder
         run: rm -rf TCS-Mini/TCSDG-TCS-Mini-LoRa/build

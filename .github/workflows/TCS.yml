@@ -1,4 +1,4 @@
-name: ESP-IDF Build Multiple Projects
+name: ESP-IDF Build Mini & Master Projects
 
 on:
   push:
@@ -12,8 +12,10 @@ jobs:
     strategy:
       matrix:
         project:
-          - TCS-Mini/TCSDG-TCS-Mini-LoRa
-          - TCS-Master/TCSDG-TCS-Master-Main
+          - name: Mini
+            path: TCS-Mini/TCSDG-TCS-Mini-LoRa
+          - name: Master
+            path: TCS-Master/TCSDG-TCS-Master-Main/tcsmain
 
     steps:
       # 1. Checkout repository
@@ -32,17 +34,17 @@ jobs:
       # 3. Build project
       - name: Build project
         run: idf.py build
-        working-directory: ${{ matrix.project }}
+        working-directory: ${{ matrix.project.path }}
 
       # 4. Upload binaries
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-${{ matrix.project }}
+          name: firmware-${{ matrix.project.name }}
           path: |
-            ${{ matrix.project }}/build/*.bin
-            ${{ matrix.project }}/build/*.elf
+            ${{ matrix.project.path }}/build/*.bin
+            ${{ matrix.project.path }}/build/*.elf
 
       # 5. Clean up build folder
       - name: Clean up build folder
-        run: rm -rf ${{ matrix.project }}/build
+        run: rm -rf ${{ matrix.project.path }}/build

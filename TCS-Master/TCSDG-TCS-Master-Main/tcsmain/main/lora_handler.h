@@ -11,4 +11,4 @@ void lora_handler_stop(void);       // Stop tasks
 void lora_send_telemetry_data(void);
 void lora_send_fault_warnings(void);
 
-#endif 
+#endif // LORA_HANDLER_H

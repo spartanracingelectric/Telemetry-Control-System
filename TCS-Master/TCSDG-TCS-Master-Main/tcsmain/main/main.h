@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "esp_attr.h" 
+#include "esp_attr.h"  // for RTC_DATA_ATTR if needed
 #include <rgb_ledc_controller.h>
 
 void handleLightSleepState(void);
@@ -24,4 +24,4 @@ extern const uint32_t BLUE;
 extern const uint32_t YELLOW;
 
 
-#endif 
+#endif // MAIN_H

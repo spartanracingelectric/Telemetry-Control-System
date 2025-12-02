@@ -20,36 +20,27 @@ jobs:
 
     steps:
       # 1. Checkout repository
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      # 2. Ensure pip is installed and upgraded
-      - name: Ensure pip and setuptools
-        run: |
-          python -m ensurepip --upgrade
-          python -m pip install --upgrade pip setuptools wheel
-
-      # 3. Cache Python dependencies
-      - name: Cache Python dependencies
-        uses: actions/cache@v3
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          fetch-depth: 1
+          persist-credentials: false
 
-      # 4. Install project-specific Python dependencies
-      - name: Install dependencies
+      # 2. Install pip and Python tools
+      - name: Install pip and Python dependencies
         run: |
+          apt-get update
+          apt-get install -y python3-pip
+          python3 -m pip install --upgrade pip setuptools wheel
           REQ="${{ matrix.project }}/requirements.txt"
-          if [ -f $REQ ]; then pip install -r $REQ; fi
+          if [ -f $REQ ]; then python3 -m pip install -r $REQ; fi
 
-      # 5. Build project
+      # 3. Build project
       - name: Build project
         run: idf.py build
         working-directory: ${{ matrix.project }}
 
-      # 6. Upload binaries
+      # 4. Upload binaries
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
@@ -58,6 +49,6 @@ jobs:
             ${{ matrix.project }}/build/*.bin
             ${{ matrix.project }}/build/*.elf
 
-      # 7. Clean up build folder
+      # 5. Clean up build folder
       - name: Clean up build folder
         run: rm -rf ${{ matrix.project }}/build

@@ -1,0 +1,48 @@
+name: ESP-IDF Build Multiple Projects
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - TCS-Mini/TCSDG-TCS-Mini-LoRa
+          - TCS-Master/TCSDG-TCS-Master-Main
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      # 2. Install ESP-IDF v5.4
+      - name: Install ESP-IDF
+        uses: espressif/install-esp-idf-action@v1
+        with:
+          version: 'v5.4'
+
+      # 3. Build project
+      - name: Build project
+        run: idf.py build
+        working-directory: ${{ matrix.project }}
+
+      # 4. Upload binaries
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.project }}
+          path: |
+            ${{ matrix.project }}/build/*.bin
+            ${{ matrix.project }}/build/*.elf
+
+      # 5. Clean up build folder
+      - name: Clean up build folder
+        run: rm -rf ${{ matrix.project }}/build

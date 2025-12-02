@@ -1,4 +1,4 @@
-name: ESP-IDF Build Multiple Projects (Docker)
+name: ESP-IDF Build Multiple Projects (Docker + venv)
 
 on:
   push:
@@ -26,18 +26,20 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      # 2. Install pip and Python tools
-      - name: Install pip and Python dependencies
+      # 2. Setup Python virtual environment and install dependencies
+      - name: Setup Python venv and install dependencies
         run: |
-          apt-get update
-          apt-get install -y python3-pip
-          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
           REQ="${{ matrix.project }}/requirements.txt"
-          if [ -f $REQ ]; then python3 -m pip install -r $REQ; fi
+          if [ -f $REQ ]; then pip install -r $REQ; fi
 
       # 3. Build project
       - name: Build project
-        run: idf.py build
+        run: |
+          source venv/bin/activate
+          idf.py build
         working-directory: ${{ matrix.project }}
 
       # 4. Upload binaries

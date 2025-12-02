@@ -19,12 +19,15 @@ jobs:
       # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
 
       # 2. Install ESP-IDF v5.4
       - name: Install ESP-IDF
-        uses: esp-idf/setup-esp-idf@v2
+        uses: espressif/install-esp-idf-action@v1
         with:
-          version: v5.4
+          version: 'v5.4'
 
       # 3. Build project
       - name: Build project

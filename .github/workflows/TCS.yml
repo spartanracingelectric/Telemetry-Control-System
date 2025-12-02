@@ -1,4 +1,4 @@
-name: ESP-IDF Build Multiple Projects (Docker)
+name: ESP-IDF Build Multiple Projects
 
 on:
   push:
@@ -15,23 +15,23 @@ jobs:
           - TCS-Mini/TCSDG-TCS-Mini-LoRa
           - TCS-Master/TCSDG-TCS-Master-Main
 
-    container:
-      image: espressif/idf:v5.4
-
     steps:
       # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          persist-credentials: false
 
-      # 2. Build project
+      # 2. Install ESP-IDF v5.4
+      - name: Install ESP-IDF
+        uses: esp-idf/setup-esp-idf@v2
+        with:
+          version: v5.4
+
+      # 3. Build project
       - name: Build project
         run: idf.py build
         working-directory: ${{ matrix.project }}
 
-      # 3. Upload binaries
+      # 4. Upload binaries
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
@@ -40,6 +40,6 @@ jobs:
             ${{ matrix.project }}/build/*.bin
             ${{ matrix.project }}/build/*.elf
 
-      # 4. Clean up build folder
+      # 5. Clean up build folder
       - name: Clean up build folder
         run: rm -rf ${{ matrix.project }}/build

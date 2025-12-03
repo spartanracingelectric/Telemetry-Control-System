@@ -14,6 +14,7 @@ Telemetry Control System (TCS) is a system designed to enable real-time communic
 * [Building & Flashing Firmware](#building--flashing-firmware)
 * [Running the Python Application](#running-the-python-application)
 * [Workflow](#workflow)
+* [CI/CD Pipeline](#cicd-pipeline)
 * [Contact](#contact)
 
 ---
@@ -32,10 +33,10 @@ This setup allows real-time telemetry, testing, and demonstration of embedded fi
 
 ## Features
 
-* Real-time bidirectional communication between car and laptop via LoRa.
-* Firmware for both Master and Mini ESP32 devices.
-* Python application for monitoring, control, and data visualization.
-* Modular and extensible design for future enhancements.
+* Real-time bidirectional communication between car and laptop via LoRa
+* Firmware for both Master and Mini ESP32 devices
+* Python application for monitoring, control, and data visualization
+* Modular and extensible design for future enhancements
 
 ---
 
@@ -52,9 +53,73 @@ This setup allows real-time telemetry, testing, and demonstration of embedded fi
 
 ## Repository Structure
 
-* `TCS-Mini/` — Firmware for the Master ESP32 on the laptop.
-* `TCS-Master/` — Firmware for the Mini ESP32 on the car.
-* `Software/` — Python application for monitoring and control.
+### `Software/` — Python Application
+
+Contains the telemetry dashboard and UART communication layer.
+
+#### Files
+
+* **`tcs_app.py`**
+  Main GUI dashboard using DearPyGUI.
+  Handles UI layout, threading, live telemetry display, command sending, etc.
+
+* **`uart_data_read.py`**
+  Serial interface module.
+  Handles UART reads, packet parsing, and communication with the GUI layer.
+
+---
+
+### `TCS-Mini/` — ESP32 Firmware (Laptop Side)
+
+Mini = laptop-side ESP32 that receives telemetry via LoRa and can send commands.
+
+Includes:
+
+* **LoRa Modules:**
+  `lora_app.c`, `lora_app.h`
+
+* **UART Modules:**
+  `uart_app.c`, `uart_app.h`
+
+* **Networking / Web:**
+  `wifi_app.c`, `wifi_app.h`, `web_app.c`, `web_app.h`, `http_server.c`, `http_server.h`
+
+* **Common:**
+  `tasks_common.h`, `main.c`, `CMakeLists.txt`, `Kconfig.projbuild`, `idf_component.yml`
+
+* **`webpage/`** — Static web assets
+
+---
+
+### `TCS-Master/` — ESP32 Firmware (Car Side)
+
+Master = car-side ESP32 responsible for collecting sensor data and transmitting telemetry.
+
+#### Files
+
+* **`main.c`, `main.h`**
+  Firmware entry point.
+
+* **`telemetry.c`, `telemetry.h`**
+  Builds telemetry packets from all available sensors.
+
+* **`lora_handler.c`, `lora_handler.h`**
+  Handles LoRa transmission.
+
+* **`can_lora.c`, `can_lora.h`**
+  CAN bus reading and telemetry conversion.
+
+* **`crash_imu.c`, `crash_imu.h`**
+  IMU crash/acceleration detection.
+
+* **`humidity.c`, `humidity.h`**
+  Humidity/environment sensor.
+
+* **`rgb_ledc_controller.c`, `rgb_ledc_controller.h`**
+  LED status indicator logic.
+
+* **Build Files:**
+  `CMakeLists.txt`, `component.mk`, `Kconfig.projbuild`
 
 ---
 
@@ -62,110 +127,76 @@ This setup allows real-time telemetry, testing, and demonstration of embedded fi
 
 ### Firmware (ESP32)
 
-* ESP-IDF (version compatible with your ESP32). Installable through VSCode. 
-* Dependencies (on Linux/Ubuntu):
-
 ```bash
 sudo apt-get install git wget flex bison gperf python3 python3-pip python3-venv cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
 ```
 
-* A USB cable to connect the ESP32 devices to your computer.
+### Python
 
-### Python Application
-
-* Python > 3.12
-* Python dependencies (install via `requirements.txt`)
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
 ## Building & Flashing Firmware
 
-1. **Clone the repository**:
-
 ```bash
 git clone https://github.com/spartanracingelectric/Telemetry-Control-System.git
 ```
 
-2. **Set up ESP-IDF**:
-
-```bash
-cd ~/esp
-git clone -b <version> --recursive https://github.com/espressif/esp-idf.git
-cd esp-idf
-./install.sh esp32
-. ./export.sh
-```
-
-3. **Build firmware**:
-
-* For Master ESP32:
+### Build
 
 ```bash
 cd TCS-Master
 idf.py build
-```
 
-* For Mini ESP32:
-
-```bash
 cd TCS-Mini
 idf.py build
 ```
 
-4. **Flash firmware**:
+### Flash
 
 ```bash
 idf.py -p /dev/ttyUSB0 flash
-```
-
-Replace `/dev/ttyUSB0` with your device port.
-
-5. **Monitor output**:
-
-```bash
-idf.py monitor
 ```
 
 ---
 
 ## Running the Python Application
 
-1. Navigate to the Python application folder:
-
 ```bash
 cd Software
-```
-
-2. (Optional) Create a virtual environment:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-3. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-4. Run the application:
-
-```bash
-python main.py
+python tcs_app.py
 ```
 
 ---
 
 ## Workflow
 
-1. Flash firmware to both Master (car) and Mini (laptop) ESP32 devices.
-2. Connect hardware (sensors, CAN, LoRa antennas) as needed.
-3. Boot the devices; Master sends telemetry data to Mini.
-4. Run the Python application to monitor data, log telemetry, and send commands.
+1. Flash both ESP32 devices.
+2. Power the car-side Master.
+3. Power the laptop-side Mini.
+4. Launch the Python dashboard.
+
+---
+
+## CI/CD Pipeline
+
+### **1. Python Syntax & Build Check**
+
+* Checks syntax for `tcs_app.py` and `uart_data_read.py`
+* Ensures imports load properly
+* Fails on any syntax or import error
+
+### **2. ESP-IDF Build Pipeline**
+
+* Installs ESP-IDF toolchain
+* Builds TCS-Master and TCS-Mini
+* Fails on any compile or configuration error
 
 ---
 
 ## Contact
 
-* **Project Lead**: Shinika
+**Project Lead:** Shinika

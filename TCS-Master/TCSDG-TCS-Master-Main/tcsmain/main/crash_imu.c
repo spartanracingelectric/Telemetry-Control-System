@@ -229,7 +229,7 @@ void icm42670_test(void *pvParameters)
 
     int16_t raw_reading;
     uint8_t data_register;
-    uint8_t CRASH_THRESHOLD = 18;
+    uint8_t CRASH_THRESHOLD = 26;
     /* select which acceleration or gyro value should be read: */
     // data_register = ICM42670_REG_ACCEL_DATA_X1;
     // data_register = ICM42670_REG_ACCEL_DATA_Y1;

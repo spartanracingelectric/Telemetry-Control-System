@@ -178,7 +178,6 @@ static void task_master(void *pvParameters) {
     while (1) {
         lora_send_telemetry_data();
         lora_send_fault_warnings();
-        //vTaskDelay(pdMS_TO_TICKS(1000));  // 1s delay
     }
 }
 
@@ -251,7 +250,6 @@ static void task_state_monitor(void *pvParameters) {
     }
 }
 
-// --- Public functions ---
 void lora_handler_init(void) {
     LoRaInit();
     int8_t txPowerInDbm = 22;
